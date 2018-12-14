@@ -1,8 +1,11 @@
 package edwarddunn.co.uk.augmented_reality_app;
 
 import android.media.MediaPlayer;
+import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+
+import com.google.ar.sceneform.rendering.ExternalTexture;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.rendering.Color;
@@ -29,4 +32,30 @@ public class MainActivity extends AppCompatActivity {
 
     // Height controls
     private static final float VIDEO_HEIGHT_METERS = 0.85f;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.activity_video);
+        arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.ux_fragment);
+
+        ExternalTexture texture = new ExternalTexture();
+
+        //TODO - add image chroma here as R.raw.image_chroma
+        mediaPlayer = MediaPlayer.create(this, [image chroma here]);
+        mediaPlayer.setSurface(texture.getSurface());
+        mediaPlayer.setLooping(true);
+
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (mediaPlayer != null) {
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
+    }
 }
