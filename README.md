@@ -2,7 +2,7 @@
 Google ARCore Android App for manipulating simple objects on flat surfaces.
 
 ## Purpose
-I started this project to learn more about developing AR apps.
+I started this project to learn more about developing AR apps, I'm using the Google Developer guides as a reference.
 
 ## Install
 - Gradle
