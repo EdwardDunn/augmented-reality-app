@@ -4,6 +4,8 @@ import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Gravity;
+import android.widget.Toast;
 
 import com.google.ar.sceneform.rendering.ExternalTexture;
 import com.google.ar.sceneform.rendering.ModelRenderable;
@@ -14,7 +16,8 @@ import com.google.ar.sceneform.rendering.Color;
  * Created by Edward Dunn
  *
  * Description: I have started this project to learn more about developing AR apps. This application
- * will display a simple custom object on any flat surface.
+ * will display a simple custom object on any flat surface. I'm using the Android developer examples
+ * as a reference - https://developers.google.com/ar/develop/c/quickstart.
  */
 
 public class MainActivity extends AppCompatActivity {
@@ -46,6 +49,26 @@ public class MainActivity extends AppCompatActivity {
         mediaPlayer = MediaPlayer.create(this, [image chroma here]);
         mediaPlayer.setSurface(texture.getSurface());
         mediaPlayer.setLooping(true);
+
+        //create renderable
+        ModelRenderable.builder()
+                //TODO - add key video to res folder
+                .setSource(this, R.raw.key_video)
+                .build()
+                .thenAccept(
+                        renderable -> {
+                            videoRenderable = renderable;
+                            renderable.getMaterial().setExternalTexture("videoTexture", texture);
+                            renderable.getMaterial().setFloat4("keyColor", CHROMA_KEY_COLOR);
+                        })
+                .exceptionally(
+                        throwable -> {
+                            Toast toast =
+                                    Toast.makeText(this, "Unable to load video renderable", Toast.LENGTH_LONG);
+                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            toast.show();
+                            return null;
+                        });
 
     }
 
