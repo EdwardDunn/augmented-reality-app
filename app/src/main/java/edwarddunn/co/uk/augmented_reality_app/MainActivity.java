@@ -1,12 +1,20 @@
 package edwarddunn.co.uk.augmented_reality_app;
 
+import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.widget.Toast;
 
+import com.google.ar.core.Anchor;
+import com.google.ar.core.HitResult;
+import com.google.ar.core.Plane;
+import com.google.ar.sceneform.AnchorNode;
+import com.google.ar.sceneform.Node;
+import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ExternalTexture;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
@@ -30,10 +38,10 @@ public class MainActivity extends AppCompatActivity {
     private ModelRenderable videoRenderable;
     private MediaPlayer mediaPlayer;
 
-    // Color filter
-    private static final Color CHROMA_KEY_COLOR = new Color(0.1843f, 1.0f, 0.098f);
+    // color filter
+    private static final Color KEY_COLOR = new Color(0.1843f, 1.0f, 0.098f);
 
-    // Height controls
+    // height controls
     private static final float VIDEO_HEIGHT_METERS = 0.85f;
 
     @Override
@@ -59,16 +67,47 @@ public class MainActivity extends AppCompatActivity {
                         renderable -> {
                             videoRenderable = renderable;
                             renderable.getMaterial().setExternalTexture("videoTexture", texture);
-                            renderable.getMaterial().setFloat4("keyColor", CHROMA_KEY_COLOR);
-                        })
-                .exceptionally(
-                        throwable -> {
-                            Toast toast =
-                                    Toast.makeText(this, "Unable to load video renderable", Toast.LENGTH_LONG);
-                            toast.setGravity(Gravity.CENTER, 0, 0);
-                            toast.show();
-                            return null;
+                            renderable.getMaterial().setFloat4("keyColor", KEY_COLOR);
                         });
+
+        arFragment.setOnTapArPlaneListener(
+                (HitResult hitResult, Plane plane, MotionEvent motionEvent) -> {
+                    if (videoRenderable == null) {
+                        return;
+                    }
+
+                    // add anchor
+                    Anchor anchor = hitResult.createAnchor();
+                    AnchorNode anchorNode = new AnchorNode(anchor);
+                    anchorNode.setParent(arFragment.getArSceneView().getScene());
+
+                    // create a node to render the video and add it to the anchor.
+                    Node videoNode = new Node();
+                    videoNode.setParent(anchorNode);
+
+                    // set the scale of the node so that the aspect ratio of the video is correct
+                    float videoWidth = mediaPlayer.getVideoWidth();
+                    float videoHeight = mediaPlayer.getVideoHeight();
+                    videoNode.setLocalScale(
+                            new Vector3(
+                                    VIDEO_HEIGHT_METERS * (videoWidth / videoHeight), VIDEO_HEIGHT_METERS, 1.0f));
+
+                    // Start playing the video when the first node is placed
+                    if (!mediaPlayer.isPlaying()) {
+                        mediaPlayer.start();
+
+                        // prevent renderable appearing as black quad before the video starts
+                        texture
+                                .getSurfaceTexture()
+                                .setOnFrameAvailableListener(
+                                        (SurfaceTexture surfaceTexture) -> {
+                                            videoNode.setRenderable(videoRenderable);
+                                            texture.getSurfaceTexture().setOnFrameAvailableListener(null);
+                                        });
+                    } else {
+                        videoNode.setRenderable(videoRenderable);
+                    }
+                });
 
     }
 
